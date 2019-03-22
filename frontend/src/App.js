@@ -36,38 +36,68 @@ class App extends Component {
 
     this.state={
       columnDefs: [
-        
-        {
-          headerName: "ManagerId", field: "manager_id", minWidth: 10    
-        },
-        {
-          headerName: "Manager Name", field: "manager_name",cellRenderer: 'agGroupCellRenderer', minWidth: 140
-        },
-        {
-          headerName: "Employee Id", field:"id", filter: "agNumberColumnFilter", minWidth: 10
-        },
-        {
-          headerName: "Name", field: "name", minWidth: 10, filter: "agTextColumnFilter"
-        },
-        {
-          headerName: "Age", field: "age",  sortable: "true", minWidth: 40
-        },
-        {
-          headerName: "Salary", field: "salary", sortable: "true",
-          filter: "agNumberColumnFilter",
 
-          cellStyle: function(params){
-            if(params.value>22000){
-              return {color: 'red'}
-            }else{
-              return null;
+        {
+          headerName: "Manager Details",
+          marryChildren: true,
+          children: [
+            {
+              headerName: "ManagerId", field: "manager_id", minWidth: 10    
+            },
+            {
+              headerName: "Manager Name", field: "manager_name",cellRenderer: 'agGroupCellRenderer', minWidth: 140,
+              cellRendererParams: {
+                suppressCount: true
+               }
             }
-
-            
-          }
+          ]
         },
-      
+        {
+          headerName: "Employee Details",
+          marryChildren: true,
+          children: [
+            {
+              headerName: "Employee Id", field:"id", filter: "agNumberColumnFilter", minWidth: 10
+            },
+            {
+              headerName: "Name", field: "name", minWidth: 10, filter: "agTextColumnFilter", cellRenderer: "agGroupCellRenderer"
+              , suppressSizeToFit : true
+            },
+            {
+              headerName: "Age", field: "age",  sortable: "true", minWidth: 40
+            },
+            {
+              headerName: "Salary", field: "salary", sortable: "true",
+              filter: "agNumberColumnFilter",
+    
+              cellStyle: function(params){
+                if(params.value>22000){
+                  return {color: 'red'}
+                }else{
+                  return null;
+                }
+    
+                
+              }
+            },
+            {
+              headerName: "Office Number", field: "office_no"
+            },
+            {
+              headerName: "Mobile Number", field: "mbl_no"
+            }
+          
+          ]
+        }
+        
+
+       
       ],
+
+      defaultColDef: {
+        resizeable: true,
+        sortable: true
+      },
       /*
       rowData: [
         {
@@ -80,26 +110,75 @@ class App extends Component {
              {manager_id: 3, manager_name: "ketan"}, {manager_id:2, manager_name:"swaraj"}
           ]
         }
-      ],*/
+      ],
+
+      
+      gridOptions: 
+      {
+        api: {
+          setRowData: ''
+        },
+        rowData: ''
+      },*/
+      
+
       getNodeChildDetails: function getNodeChildDetails(rowItem) {
+        //console.log(rowItem);     // this returns data from the fetch mgr details
         if (rowItem.employees) {
+          //console.log(rowItem.employees);
           return {
             group: true,
             expanded: true,
             children: rowItem.employees,
-            key: rowItem.employees.name
+           // key: rowItem.manager_id,
+            
           };
-        } else {
-          return null;
-        }
+          
+        } 
+       else if(rowItem.contacts){
+        console.log(rowItem.contacts);
+        //console.log(rowItem.manager);
+          return{
+            group: true,
+            expanded: false, 
+            children: rowItem.contacts,
+            key: rowItem.contacts.contact_id,
+
+          };
+  
+       }
+       else{
+         return null;
+       }
       }
     }
 
   }
 
+
+
   onGridReady(params){
     this.gridApi = params.api;
     this.gridColumnApi = params.api;
+
+    this.gridApi.sizeColumnsToFit();
+
+    const httpRequest = new XMLHttpRequest();
+    const updateData = data => {
+      this.setState({ rowData: data });
+    };
+
+    httpRequest.open(
+      "GET",
+      "http://localhost:8080/employees/mgrs/"
+    );
+    httpRequest.send();
+    httpRequest.onreadystatechange = () => {
+      if (httpRequest.readyState === 4 && httpRequest.status === 200) {
+        updateData(JSON.parse(httpRequest.responseText));
+      }
+    };
+    
 
   }
 
@@ -215,7 +294,7 @@ class App extends Component {
 
 
   componentDidMount(){
-    fetch("http://localhost:8080/employees/mgrs/")
+    /*fetch("http://localhost:8080/employees/mgrs/")
     .then(res => res.json())
     .then(rowData => this.setState({rowData}))
     
@@ -256,6 +335,7 @@ class App extends Component {
     });*/
 
   }
+
 
   handleCreateClick(event){
 
@@ -307,6 +387,9 @@ class App extends Component {
     });
   }
 
+  
+
+
   render(){
     const queryresults = this.state.queryresults;
     const results = this.state.results;
@@ -319,6 +402,8 @@ class App extends Component {
     const mname = this.state.mname;
     const emplist = this.state.emplist;
     const manager = this.state.manager_id;
+
+    
     return (
 
 
@@ -396,6 +481,9 @@ class App extends Component {
         </div>
         
       );
+      
+   
+
     
     
   }
